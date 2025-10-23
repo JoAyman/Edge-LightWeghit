@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EdgeLight - Run Heavy Vision Models on Lightweight CPUs | $60K AI Framework</title>
+    <meta name="description" content="EdgeLight: A revolutionary software framework achieving 2-6× speedup running heavy neural networks on Raspberry Pi & low-cost CPUs. Eliminate expensive GPU dependencies.">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 50%, #ec4899 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, rgba(96, 165, 250, 0.1) 0%, rgba(167, 139, 250, 0.1) 100%);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(96, 165, 250, 0.3);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 60px rgba(96, 165, 250, 0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            color: white;
+            padding: 14px 32px;
+            border-radius: 12px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(96, 165, 250, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 14px 32px;
+            border-radius: 12px;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+            border: 1px solid rgba(96, 165, 250, 0.2);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
+            border-radius: 4px;
+            transition: width 2s ease;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .floating {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .pulse {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .grid-bg {
+            background-image: 
+                linear-gradient(rgba(96, 165, 250, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(96, 165, 250, 0.05) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .accordion-content.active {
+            max-height: 1000px;
+        }
+
+        nav {
+            backdrop-filter: blur(10px);
+            background: rgba(10, 14, 39, 0.8);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .tag {
+            background: rgba(96, 165, 250, 0.2);
+            color: #60a5fa;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .comparison-card {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .comparison-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #ef4444 0%, #3b82f6 100%);
+        }
+
+        .stage-card {
+            position: relative;
+            padding-left: 60px;
+        }
+
+        .stage-number {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 20px;
+        }
+
+        .counter {
+            font-size: 48px;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        @media (max-width: 768px) {
+            .counter {
+                font-size: 32px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                </div>
+                <span class="text-xl font-bold">EdgeLight</span>
+            </div>
+            
+            <div class="hidden md:flex items-center gap-8">
+                <a href="#features" class="text-gray-300 hover:text-white transition">Features</a>
+                <a href="#results" class="text-gray-300 hover:text-white transition">Results</a>
+                <a href="#architecture" class="text-gray-300 hover:text-white transition">Architecture</a>
+                <a href="#downloads" class="text-gray-300 hover:text-white transition">Downloads</a>
+            </div>
+            
+            <button class="btn-primary">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                </svg>
+                GitHub
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="min-h-screen flex items-center justify-center relative overflow-hidden grid-bg pt-24">
+        <div class="absolute inset-0 overflow-hidden">
+            <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500 rounded-full filter blur-3xl opacity-10 floating"></div>
+            <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500 rounded-full filter blur-3xl opacity-10 floating" style="animation-delay: 2s;"></div>
+        </div>
+        
+        <div class="max-w-6xl mx-auto px-6 text-center relative z-10">
+            <div class="mb-6">
+                <span class="tag">REVOLUTIONARY AI FRAMEWORK</span>
+            </div>
+            
+            <h1 class="text-5xl md:text-7xl font-black mb-6 leading-tight">
+                Run Heavy Vision Models<br/>
+                <span class="gradient-text">on Lightweight CPUs</span>
+            </h1>
+            
+            <p class="text-xl md:text-2xl text-gray-300 mb-12 max-w-4xl mx-auto">
+                EdgeLight eliminates the need for expensive GPU edge modules. Achieve 2×–6× real-world speedup on Raspberry Pi & low-cost SBCs with minimal accuracy loss.
+            </p>
+            
+            <div class="flex flex-wrap items-center justify-center gap-4 mb-16">
+                <button class="btn-primary" onclick="scrollToSection('downloads')">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Download Framework
+                </button>
+                <button class="btn-secondary" onclick="scrollToSection('demo')">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Watch Demo
+                </button>
+            </div>
+            
+            <!-- Live Metrics Ticker -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 max-w-5xl mx-auto">
+                <div class="metric-card">
+                    <div class="text-4xl font-bold gradient-text counter" data-target="6">0</div>
+                    <div class="text-sm text-gray-400 mt-2">Max Speedup</div>
+                </div>
+                <div class="metric-card">
+                    <div class="text-4xl font-bold gradient-text counter" data-target="75">0</div>
+                    <div class="text-sm text-gray-400 mt-2">% Memory Reduction</div>
+                </div>
+                <div class="metric-card">
+                    <div class="text-4xl font-bold gradient-text">$<span class="counter" data-target="550">0</span></div>
+                    <div class="text-sm text-gray-400 mt-2">Cost Savings per Unit</div>
+                </div>
+                <div class="metric-card">
+                    <div class="text-4xl font-bold gradient-text counter" data-target="20">0</div>
+                    <div class="text-sm text-gray-400 mt-2">FPS on Raspberry Pi</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Problem Statement -->
+    <section class="py-24 px-6">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold mb-6">The GPU Dependency Problem</h2>
+                <p class="text-xl text-gray-300 max-w-3xl mx-auto">
+                    Running real-time vision models at the edge requires expensive GPU modules ($400-$700), making robotics and IoT vision applications prohibitively expensive at scale.
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="glass-card p-8 comparison-card">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-12 h-12 bg-red-500/20 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </div>
+                        <h3 class="text-2xl font-bold text-red-400">Traditional Approach</h3>
+                    </div>
+                    <ul class="space-y-3 text-gray-300">
+                        <li class="flex items-start gap-3">
+                            <span class="text-red-400 mt-1">✗</span>
+                            <span>Requires expensive GPU edge modules (Jetson Xavier $400-$700)</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="text-red-400 mt-1">✗</span>
+                            <span>High power consumption (10-30W)</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="text-red-400 mt-1">✗</span>
+                            <span>Limited deployment at scale due to cost</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="text-red-400 mt-1">✗</span>
+                            <span>Complex thermal management required</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="glass-card p-8 comparison-card">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </div>
+                        <h3 class="text-2xl font-bold text-green-400">EdgeLight Solution</h3>
+                    </div>
+                    <ul class="space-y-3 text-gray-300">
+                        <li class="flex items-start gap-3">
+                            <span class="text-green-400 mt-1">✓</span>
+                            <span>Runs on $35-$100 SBCs (Raspberry Pi, ARM boards)</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="text-green-400 mt-1">✓</span>
+                            <span>Low power consumption (3-5W)</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="text-green-400 mt-1">✓</span>
+                            <span>Scalable deployment with 80-90% cost reduction</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="text-green-400 mt-1">✓</span>
+                            <span>Passive cooling sufficient for most applications</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Interactive Metrics Dashboard -->
+    <section id="results" class="py-24 px-6 bg-gradient-to-b from-transparent to-blue-900/10">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold mb-6">Real-World Performance Results</h2>
+                <p class="text-xl text-gray-300 max-w-3xl mx-auto">
+                    YOLOv5-small object detection on Raspberry Pi 4 (ARM Cortex-A72, 4GB)
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+                <!-- Before/After Comparison Table -->
+                <div class="glass-card p-8">
+                    <h3 class="text-2xl font-bold mb-6 flex items-center gap-3">
+                        <span class="w-8 h-8 bg-red-500/20 rounded-lg flex items-center justify-center">
+                            <span class="text-red-400 text-sm">FP32</span>
+                        </span>
+                        Baseline (CPU FP32)
+                    </h3>
+                    
+                    <div class="space-y-6">
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-gray-300">Latency per Frame</span>
+                                <span class="font-mono text-xl font-bold text-red-400">320ms</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 100%; background: #ef4444;"></div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-gray-300">Frames Per Second</span>
+                                <span class="font-mono text-xl font-bold text-red-400">3.1 FPS</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 15%; background: #ef4444;"></div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-gray-300">Memory Usage</span>
+                                <span class="font-mono text-xl font-bold text-red-400">1024 MB</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 100%; background: #ef4444;"></div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-gray-300">Accuracy (mAP@0.5)</span>
+                                <span class="font-mono text-xl font-bold">45.2%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 45%;"></div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-gray-300">Energy per Inference</span>
+                                <span class="font-mono text-xl font-bold text-red-400">1600 mJ</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Optimized Results -->
+                <div class="glass-card p-8 border-2 border-green-500/30">
+                    <h3 class="text-2xl font-bold mb-6 flex items-center gap-3">
+                        <span class="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center">
+                            <span class="text-green-400 text-sm">INT8</span>
+                        </span>
+                        EdgeLight Optimized
+                    </h3>
+                    
+                    <div class="space-y-6">
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-gray-300">Latency per Frame</span>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-mono text-xl font-bold text-green-400">65ms</span>
+                                    <span class="tag">4.9× faster</span>
+                                </div>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 20%;"></div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-gray-300">Frames Per Second</span>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-mono text-xl font-bold text-green-400">15.4 FPS</span>
+                                    <span class="tag">5× faster</span>
+                                </div>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 77%;"></div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-gray-300">Memory Usage</span>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-mono text-xl font-bold text-green-400">328 MB</span>
+                                    <span class="tag">3.1× smaller</span>
+                                </div>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 32%;"></div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-gray-300">Accuracy (mAP@0.5)</span>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-mono text-xl font-bold">43.8%</span>
+                                    <span class="tag">-3.1% only</span>
+                                </div>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 44%;"></div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-gray-300">Energy per Inference</span>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-mono text-xl font-bold text-green-400">520 mJ</span>
+                                    <span class="tag">67% less</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Performance Chart -->
+            <div class="glass-card p-8">
+                <h3 class="text-2xl font-bold mb-6">Performance Comparison Chart</h3>
+                <canvas id="performanceChart" height="100"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technical Architecture -->
+    <section id="architecture" class="py-24 px-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold mb-6">Optimization Pipeline</h2>
+                <p class="text-xl text-gray-300 max-w-3xl mx-auto">
+                    End-to-end software pipeline transforming heavy neural models into CPU-ready runtimes
+                </p>
+            </div>
+            
+            <!-- Pipeline Stages -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                <div class="glass-card p-6 text-center">
+                    <div class="w-16 h-16 bg-blue-500/20 rounded-xl flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold mb-2">1. Model Export</h3>
+                    <p class="text-sm text-gray-400">PyTorch/TF → ONNX<br/>Graph optimization</p>
+                </div>
+                
+                <div class="glass-card p-6 text-center">
+                    <div class="w-16 h-16 bg-purple-500/20 rounded-xl flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold mb-2">2. Quantization</h3>
+                    <p class="text-sm text-gray-400">FP32 → INT8 PTQ<br/>Mixed precision</p>
+                </div>
+                
+                <div class="glass-card p-6 text-center">
+                    <div class="w-16 h-16 bg-pink-500/20 rounded-xl flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold mb-2">3. Pruning</h3>
+                    <p class="text-sm text-gray-400">Structured pruning<br/>20-50% reduction</p>
+                </div>
+                
+                <div class="glass-card p-6 text-center">
+                    <div class="w-16 h-16 bg-green-500/20 rounded-xl flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold mb-2">4. Compilation</h3>
+                    <p class="text-sm text-gray-400">TVM/OpenVINO<br/>CPU-optimized kernels</p>
+                </div>
+            </div>
+            
+            <!-- Detailed Pipeline Flow -->
+            <div class="glass-card p-8">
+                <div class="space-y-6">
+                    <div class="stage-card">
+                        <div class="stage-number">A</div>
+                        <div>
+                            <h4 class="text-lg font-bold mb-2">Export & Transform</h4>
+                            <p class="text-gray-400 text-sm mb-3">Convert models to ONNX, apply graph transforms (fuse Conv+BN, constant folding)</p>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="text-xs bg-blue-500/20 text-blue-300 px-3 py-1 rounded-full">ONNX Export</span>
+                                <span class="text-xs bg-blue-500/20 text-blue-300 px-3 py-1 rounded-full">Graph Optimization</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stage-card">
+                        <div class="stage-number">B</div>
+                        <div>
+                            <h4 class="text-lg font-bold mb-2">Quantization (PTQ/QAT)</h4>
+                            <p class="text-gray-400 text-sm mb-3">Post-training quantization with calibration set, per-channel weight quantization</p>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="text-xs bg-purple-500/20 text-purple-300 px-3 py-1 rounded-full">INT8 Conversion</span>
+                                <span class="text-xs bg-purple-500/20 text-purple-300 px-3 py-1 rounded-full">Calibration</span>
+                                <span class="text-xs bg-purple-500/20 text-purple-300 px-3 py-1 rounded-full">Accuracy Validation</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stage-card">
+                        <div class="stage-number">C</div>
+                        <div>
+                            <h4 class="text-lg font-bold mb-2">Structured Pruning & Distillation</h4>
+                            <p class="text-gray-400 text-sm mb-3">Channel pruning with fine-tuning, knowledge distillation from teacher model</p>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="text-xs bg-pink-500/20 text-pink-300 px-3 py-1 rounded-full">Filter Pruning</span>
+                                <span class="text-xs bg-pink-500/20 text-pink-300 px-3 py-1 rounded-full">Model Distillation</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stage-card">
+                        <div class="stage-number">D</div>
+                        <div>
+                            <h4 class="text-lg font-bold mb-2">Target-Aware Compilation</h4>
+                            <p class="text-gray-400 text-sm mb-3">TVM auto-tuning for ARM NEON/x86 AVX, generate optimized runtime module</p>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="text-xs bg-green-500/20 text-green-300 px-3 py-1 rounded-full">TVM Compilation</span>
+                                <span class="text-xs bg-green-500/20 text-green-300 px-3 py-1 rounded-full">Kernel Tuning</span>
+                                <span class="text-xs bg-green-500/20 text-green-300 px-3 py-1 rounded-full">NEON/AVX</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stage-card">
+                        <div class="stage-number">E</div>
+                        <div>
+                            <h4 class="text-lg font-bold mb-2">Adaptive Runtime Scheduler</h4>
+                            <p class="text-gray-400 text-sm mb-3">Cascade execution, early-exit, dynamic resolution adaptation at runtime</p>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="text-xs bg-yellow-500/20 text-yellow-300 px-3 py-1 rounded-full">Smart Scheduling</span>
+                                <span class="text-xs bg-yellow-500/20 text-yellow-300 px-3 py-1 rounded-full">Early Exit</span>
+                                <span class="text-xs bg-yellow-500/20 text-yellow-300 px-3 py-1 rounded-full">Dynamic Resolution</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Video Demo Section -->
+    <section id="demo" class="py-24 px-6 bg-gradient-to-b from-blue-900/10 to-transparent">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl md:text-5xl font-bold mb-6">Live Demo: GPU vs CPU</h2>
+                <p class="text-xl text-gray-300 max-w-3xl mx-auto">
+                    Side-by-side comparison running YOLOv5 object detection on the same input video
+                </p>
+            </div>
+            
+            <div class="glass-card p-8">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <div class="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-3">
+                            <h4 class="font-bold text-red-400 mb-1">Baseline: Jetson Nano GPU</h4>
+                            <p class="text-sm text-gray-400">Cost: $150 | Power: 10W | FPS: 12</p>
+                        </div>
+                        <div class="aspect-video bg-gray-900 rounded-lg flex items-center justify-center border border-gray-700">
+                            <div class="text-center">
+                                <svg class="w-20 h-20 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <p class="text-gray-500 text-sm">GPU Inference Demo</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-4 mb-3">
+                            <h4 class="font-bold text-green-400 mb-1">EdgeLight: Raspberry Pi 4 CPU</h4>
+                            <p class="text-sm text-gray-400">Cost: $75 | Power: 3W | FPS: 15.4</p>
+                        </div>
+                        <div class="aspect-video bg-gray-900 rounded-lg flex items-center justify-center border border-gray-700">
+                            <div class="text-center">
+                                <svg class="w-20 h-20 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <p class="text-gray-500 text-sm">EdgeLight Optimized Demo</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-blue-500/10 border border-blue-500/30 rounded-lg p-6 text-center">
+                    <p class="text-lg">
+                        <span class="font-bold text-green-400">EdgeLight achieves 28% higher FPS</span> with 
+                        <span class="font-bold text-green-400">50% cost savings</span> and 
+                        <span class="font-bold text-green-400">70% lower power consumption</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Cost Calculator -->
+    <section class="py-24 px-6">
+        <div class="max-w-4xl mx-auto">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl md:text-5xl font-bold mb-6">ROI Calculator</h2>
+                <p class="text-xl text-gray-300">
+                    Calculate your cost savings deploying EdgeLight at scale
+                </p>
+            </div>
+            
+            <div class="glass-card p-8">
+                <div class="mb-8">
+                    <label class="block text-lg font-semibold mb-4">Number of Edge Devices to Deploy:</label>
+                    <input type="range" id="deviceSlider" min="1" max="1000" value="100" 
+                           class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                           oninput="updateCalculator(this.value)">
+                    <div class="flex justify-between text-sm text-gray-400 mt-2">
+                        <span>1</span>
+                        <span id="deviceCount" class="font-bold text-2xl gradient-text">100</span>
+                        <span>1000</span>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="bg-red-500/10 border border-red-500/30 rounded-lg p-6">
+                        <h4 class="text-sm text-gray-400 mb-2">Traditional GPU Approach</h4>
+                        <p class="text-xs text-gray-500 mb-4">Jetson Xavier NX @ $450/unit</p>
+                        <div class="text-4xl font-bold text-red-400 font-mono">$<span id="gpuCost">45,000</span></div>
+                        <p class="text-sm text-gray-400 mt-2">Total Hardware Cost</p>
+                    </div>
+                    
+                    <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-6">
+                        <h4 class="text-sm text-gray-400 mb-2">EdgeLight on CPU</h4>
+                        <p class="text-xs text-gray-500 mb-4">Raspberry Pi 4 (4GB) @ $75/unit</p>
+                        <div class="text-4xl font-bold text-green-400 font-mono">$<span id="cpuCost">7,500</span></div>
+                        <p class="text-sm text-gray-400 mt-2">Total Hardware Cost</p>
+                    </div>
+                </div>
+                
+                <div class="bg-gradient-to-r from-green-500/20 to-blue-500/20 border-2 border-green-500/50 rounded-lg p-6 text-center">
+                    <h4 class="text-lg font-semibold mb-2">Your Total Savings</h4>
+                    <div class="text-5xl font-black gradient-text font-mono mb-2">$<span id="totalSavings">37,500</span></div>
+                    <p class="text-gray-300">
+                        That's <span id="savingsPercent" class="font-bold text-green-400">83%</span> cost reduction!
+                    </p>
+                    <p class="text-sm text-gray-400 mt-4">
+                        Plus <span class="font-bold">70% lower ongoing energy costs</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Downloadable Artifacts -->
+    <section id="downloads" class="py-24 px-6 bg-gradient-to-b from-transparent to-purple-900/10">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl md:text-5xl font-bold mb-6">Download Framework & Artifacts</h2>
+                <p class="text-xl text-gray-300">
+                    Complete package with models, scripts, datasets, and documentation
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="glass-card p-6 hover-elevate">
+                    <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">Optimized Models</h3>
+                    <p class="text-sm text-gray-400 mb-4">quantized_int8.onnx, pruned.onnx</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-gray-500 font-mono">142 MB</span>
+                        <button class="text-blue-400 hover:text-blue-300 text-sm font-semibold">Download →</button>
+                    </div>
+                </div>
+                
+                <div class="glass-card p-6 hover-elevate">
+                    <div class="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                        </svg>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">Runtime Scripts</h3>
+                    <p class="text-sm text-gray-400 mb-4">run_optimized.sh, edge_runtime.py</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-gray-500 font-mono">2.4 MB</span>
+                        <button class="text-blue-400 hover:text-blue-300 text-sm font-semibold">Download →</button>
+                    </div>
+                </div>
+                
+                <div class="glass-card p-6 hover-elevate">
+                    <div class="w-12 h-12 bg-pink-500/20 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+                        </svg>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">Calibration Dataset</h3>
+                    <p class="text-sm text-gray-400 mb-4">500 images for quantization</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-gray-500 font-mono">385 MB</span>
+                        <button class="text-blue-400 hover:text-blue-300 text-sm font-semibold">Download →</button>
+                    </div>
+                </div>
+                
+                <div class="glass-card p-6 hover-elevate">
+                    <div class="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">Benchmark Results</h3>
+                    <p class="text-sm text-gray-400 mb-4">metrics.csv, profiler logs</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-gray-500 font-mono">8.2 MB</span>
+                        <button class="text-blue-400 hover:text-blue-300 text-sm font-semibold">Download →</button>
+                    </div>
+                </div>
+                
+                <div class="glass-card p-6 hover-elevate">
+                    <div class="w-12 h-12 bg-yellow-500/20 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">Documentation</h3>
+                    <p class="text-sm text-gray-400 mb-4">README, API docs, tutorials</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-gray-500 font-mono">12 MB</span>
+                        <button class="text-blue-400 hover:text-blue-300 text-sm font-semibold">Download →</button>
+                    </div>
+                </div>
+                
+                <div class="glass-card p-6 hover-elevate border-2 border-blue-500/50">
+                    <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">Complete Package</h3>
+                    <p class="text-sm text-gray-400 mb-4">All files + Docker image</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-gray-500 font-mono">1.2 GB</span>
+                        <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition">Download All</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technical Specifications Accordion -->
+    <section id="features" class="py-24 px-6">
+        <div class="max-w-4xl mx-auto">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl md:text-5xl font-bold mb-6">Technical Specifications</h2>
+                <p class="text-xl text-gray-300">
+                    Detailed pipeline stages and implementation details
+                </p>
+            </div>
+            
+            <div class="space-y-4">
+                <div class="glass-card overflow-hidden">
+                    <button class="accordion-trigger w-full p-6 flex items-center justify-between text-left" onclick="toggleAccordion(this)">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                                <span class="text-blue-400 font-bold">A</span>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-lg">Model Export & Graph Optimization</h3>
+                                <p class="text-sm text-gray-400">Duration: 1 week</p>
+                            </div>
+                        </div>
+                        <svg class="w-6 h-6 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                    <div class="accordion-content px-6 pb-6">
+                        <div class="pl-14 space-y-3 text-gray-300">
+                            <p>Export PyTorch/TensorFlow models to ONNX format with shape inference and metadata preservation.</p>
+                            <p class="text-sm"><strong>Graph Transformations:</strong></p>
+                            <ul class="list-disc list-inside text-sm space-y-1 ml-4">
+                                <li>Fuse Conv + BatchNorm + Activation layers</li>
+                                <li>Constant folding and dead code elimination</li>
+                                <li>Remove unused operators and optimize tensor layouts</li>
+                            </ul>
+                            <div class="bg-gray-900 rounded-lg p-4 font-mono text-sm mt-4">
+                                <code>python export_to_onnx.py --input weights.pt --output baseline.onnx</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="glass-card overflow-hidden">
+                    <button class="accordion-trigger w-full p-6 flex items-center justify-between text-left" onclick="toggleAccordion(this)">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                                <span class="text-purple-400 font-bold">B</span>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-lg">INT8 Quantization (PTQ/QAT)</h3>
+                                <p class="text-sm text-gray-400">Duration: 1-2 weeks</p>
+                            </div>
+                        </div>
+                        <svg class="w-6 h-6 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                    <div class="accordion-content px-6 pb-6">
+                        <div class="pl-14 space-y-3 text-gray-300">
+                            <p>Convert FP32 weights to INT8 using post-training quantization with calibration dataset.</p>
+                            <p class="text-sm"><strong>Techniques:</strong></p>
+                            <ul class="list-disc list-inside text-sm space-y-1 ml-4">
+                                <li>Per-channel weight quantization for better accuracy</li>
+                                <li>Dynamic activation quantization</li>
+                                <li>Mixed-precision: keep critical layers in FP32</li>
+                                <li>QAT (Quantization-Aware Training) if accuracy drop > 5%</li>
+                            </ul>
+                            <div class="bg-gray-900 rounded-lg p-4 font-mono text-sm mt-4">
+                                <code>onnxruntime.quantization.quantize --input baseline.onnx --calibration_data ./calib/</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="glass-card overflow-hidden">
+                    <button class="accordion-trigger w-full p-6 flex items-center justify-between text-left" onclick="toggleAccordion(this)">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-pink-500/20 rounded-lg flex items-center justify-center">
+                                <span class="text-pink-400 font-bold">C</span>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-lg">Structured Pruning & Knowledge Distillation</h3>
+                                <p class="text-sm text-gray-400">Duration: 2 weeks</p>
+                            </div>
+                        </div>
+                        <svg class="w-6 h-6 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                    <div class="accordion-content px-6 pb-6">
+                        <div class="pl-14 space-y-3 text-gray-300">
+                            <p>Remove 20-50% of channels/filters with gradual pruning schedule and fine-tuning.</p>
+                            <p class="text-sm"><strong>Approach:</strong></p>
+                            <ul class="list-disc list-inside text-sm space-y-1 ml-4">
+                                <li>Magnitude-based channel pruning</li>
+                                <li>Layer-wise pruning ratios based on sensitivity analysis</li>
+                                <li>Knowledge distillation: student learns from teacher logits</li>
+                                <li>Feature-level distillation for intermediate layers</li>
+                            </ul>
+                            <p class="text-sm mt-3"><strong>Result:</strong> 40-60% parameter reduction with < 2% accuracy drop</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="glass-card overflow-hidden">
+                    <button class="accordion-trigger w-full p-6 flex items-center justify-between text-left" onclick="toggleAccordion(this)">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+                                <span class="text-green-400 font-bold">D</span>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-lg">TVM/OpenVINO Compilation & Auto-Tuning</h3>
+                                <p class="text-sm text-gray-400">Duration: 2 weeks</p>
+                            </div>
+                        </div>
+                        <svg class="w-6 h-6 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                    <div class="accordion-content px-6 pb-6">
+                        <div class="pl-14 space-y-3 text-gray-300">
+                            <p>Generate highly-optimized CPU kernels using TVM auto-scheduler or OpenVINO toolkit.</p>
+                            <p class="text-sm"><strong>Target-Aware Compilation:</strong></p>
+                            <ul class="list-disc list-inside text-sm space-y-1 ml-4">
+                                <li>ARM: Use NEON SIMD intrinsics (Cortex-A72, A53)</li>
+                                <li>x86: Use AVX2/AVX512 vectorization (Skylake, Ice Lake)</li>
+                                <li>Auto-tune loop tiling, unrolling, vectorization strategies</li>
+                                <li>Operator fusion and memory layout optimization</li>
+                            </ul>
+                            <div class="bg-gray-900 rounded-lg p-4 font-mono text-sm mt-4">
+                                <code>tvm_compile.py --target "llvm -mcpu=cortex-a72" --out tvm_module/</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="glass-card overflow-hidden">
+                    <button class="accordion-trigger w-full p-6 flex items-center justify-between text-left" onclick="toggleAccordion(this)">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center">
+                                <span class="text-yellow-400 font-bold">E</span>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-lg">Adaptive Runtime Scheduler</h3>
+                                <p class="text-sm text-gray-400">Duration: 2 weeks</p>
+                            </div>
+                        </div>
+                        <svg class="w-6 h-6 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                    <div class="accordion-content px-6 pb-6">
+                        <div class="pl-14 space-y-3 text-gray-300">
+                            <p>Intelligent runtime that adapts compute vs. accuracy trade-offs dynamically.</p>
+                            <p class="text-sm"><strong>Smart Scheduling Features:</strong></p>
+                            <ul class="list-disc list-inside text-sm space-y-1 ml-4">
+                                <li><strong>Cascade Execution:</strong> Run small fast model first, escalate to full model if low confidence</li>
+                                <li><strong>Early Exit:</strong> Stop inference at intermediate layers when confidence threshold met</li>
+                                <li><strong>Dynamic Resolution:</strong> Lower input resolution for non-critical frames</li>
+                                <li><strong>Frame Skipping:</strong> Process every Nth frame in video streams</li>
+                                <li><strong>Thread Pinning:</strong> Optimize CPU affinity for consistent latency</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Banner -->
+    <section class="py-24 px-6 bg-gradient-to-r from-blue-900/20 to-purple-900/20">
+        <div class="max-w-4xl mx-auto text-center">
+            <h2 class="text-4xl md:text-5xl font-bold mb-6">Ready to Deploy at Scale?</h2>
+            <p class="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
+                Join the future of edge AI. Eliminate GPU dependencies and deploy cost-effective vision systems today.
+            </p>
+            <div class="flex flex-wrap items-center justify-center gap-4">
+                <button class="btn-primary text-lg px-8 py-4">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                    View on GitHub
+                </button>
+                <button class="btn-secondary text-lg px-8 py-4">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Read Documentation
+                </button>
+            </div>
+            
+            <div class="mt-12 flex items-center justify-center gap-8 flex-wrap">
+                <div class="text-center">
+                    <div class="text-3xl font-bold gradient-text">$60,000</div>
+                    <div class="text-sm text-gray-400">Framework Value</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold gradient-text">12 Weeks</div>
+                    <div class="text-sm text-gray-400">Development Time</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold gradient-text">5-6×</div>
+                    <div class="text-sm text-gray-400">Performance Gain</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-16 px-6 border-t border-white/10">
+        <div class="max-w-6xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
+                <div>
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                        </div>
+                        <span class="text-xl font-bold">EdgeLight</span>
+                    </div>
+                    <p class="text-gray-400 text-sm">
+                        Revolutionary software framework enabling heavy vision models on lightweight CPUs.
+                    </p>
+                </div>
+                
+                <div>
+                    <h4 class="font-bold mb-4">Quick Links</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#features" class="text-gray-400 hover:text-white transition">Features</a></li>
+                        <li><a href="#results" class="text-gray-400 hover:text-white transition">Performance Results</a></li>
+                        <li><a href="#architecture" class="text-gray-400 hover:text-white transition">Architecture</a></li>
+                        <li><a href="#downloads" class="text-gray-400 hover:text-white transition">Downloads</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="font-bold mb-4">Resources</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">GitHub Repository</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Documentation</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">API Reference</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Community Forum</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+                <p class="text-sm text-gray-500">
+                    © 2025 EdgeLight Framework. All rights reserved.
+                </p>
+                <div class="flex items-center gap-6">
+                    <a href="#" class="text-gray-400 hover:text-white transition">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                        </svg>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white transition">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scroll functionality
+        function scrollToSection(sectionId) {
+            document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Counter animation
+        function animateCounters() {
+            const counters = document.querySelectorAll('.counter');
+            counters.forEach(counter => {
+                const target = parseInt(counter.getAttribute('data-target'));
+                const duration = 2000;
+                const step = target / (duration / 16);
+                let current = 0;
+                
+                const timer = setInterval(() => {
+                    current += step;
+                    if (current >= target) {
+                        counter.textContent = target;
+                        clearInterval(timer);
+                    } else {
+                        counter.textContent = Math.floor(current);
+                    }
+                }, 16);
+            });
+        }
+
+        // ROI Calculator
+        function updateCalculator(value) {
+            const devices = parseInt(value);
+            const gpuCost = devices * 450;
+            const cpuCost = devices * 75;
+            const savings = gpuCost - cpuCost;
+            const savingsPercent = Math.round((savings / gpuCost) * 100);
+            
+            document.getElementById('deviceCount').textContent = devices;
+            document.getElementById('gpuCost').textContent = gpuCost.toLocaleString();
+            document.getElementById('cpuCost').textContent = cpuCost.toLocaleString();
+            document.getElementById('totalSavings').textContent = savings.toLocaleString();
+            document.getElementById('savingsPercent').textContent = savingsPercent + '%';
+        }
+
+        // Accordion toggle
+        function toggleAccordion(button) {
+            const content = button.nextElementSibling;
+            const icon = button.querySelector('svg');
+            const allContents = document.querySelectorAll('.accordion-content');
+            const allIcons = document.querySelectorAll('.accordion-trigger svg');
+            
+            allContents.forEach(c => {
+                if (c !== content) {
+                    c.classList.remove('active');
+                }
+            });
+            
+            allIcons.forEach(i => {
+                if (i !== icon) {
+                    i.style.transform = 'rotate(0deg)';
+                }
+            });
+            
+            content.classList.toggle('active');
+            if (content.classList.contains('active')) {
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        // Performance Chart
+        function initChart() {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Latency (ms)', 'FPS', 'Memory (MB)', 'Accuracy (mAP)', 'Energy (mJ)'],
+                    datasets: [{
+                        label: 'Baseline CPU (FP32)',
+                        data: [320, 3.1, 1024, 45.2, 1600],
+                        backgroundColor: 'rgba(239, 68, 68, 0.6)',
+                        borderColor: 'rgba(239, 68, 68, 1)',
+                        borderWidth: 2
+                    }, {
+                        label: 'EdgeLight Optimized (INT8)',
+                        data: [65, 15.4, 328, 43.8, 520],
+                        backgroundColor: 'rgba(34, 197, 94, 0.6)',
+                        borderColor: 'rgba(34, 197, 94, 1)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#e2e8f0',
+                                font: {
+                                    size: 14,
+                                    family: 'Inter'
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(10, 14, 39, 0.95)',
+                            titleColor: '#e2e8f0',
+                            bodyColor: '#e2e8f0',
+                            borderColor: 'rgba(96, 165, 250, 0.3)',
+                            borderWidth: 1
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#9ca3af',
+                                font: {
+                                    family: 'Inter'
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#9ca3af',
+                                font: {
+                                    family: 'Inter'
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize on load
+        window.addEventListener('load', () => {
+            animateCounters();
+            initChart();
+            updateCalculator(100);
+        });
+    </script>
+</body>
+</html>
